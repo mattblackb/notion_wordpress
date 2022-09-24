@@ -124,25 +124,26 @@ class Notion_Content_Admin {
 		settings_fields( 'notion_content_plugin' );
 		$api = esc_attr( get_option('notion_api_key'));
 		$url = esc_attr( get_option('notion_content_database'));
-
-		$dID = array_shift(explode("?", str_replace("https://www.notion.so/", "", $url)));
-
-		$database_id = substr($dID, 0, 8)."-".substr($dID, 8, 4)."-".substr($dID, 12, 4)."-".substr($dID, 16, 4)."-".substr($dID, 20, 12);
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL,"https://api.notion.com/v1/databases/$database_id/query");
-		$headers = [ 'Authorization: Bearer ' . $api, 'Content-Type: application/json', 'Notion-Version: 2021-08-16'];
-		$postData ='
-		{
-			"sorts": [{ "property": "Name", "direction": "ascending" }]
-		}';
-
-
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-		curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		$result = curl_exec ($ch);
-		$arrResult = json_decode($result, true);
+		$dID = explode("?v=", $url)[0];
+		//$database_id = substr($dID, 0, 8)."-".substr($dID, 8, 4)."-".substr($dID, 12, 4)."-".substr($dID, 16, 4)."-".substr($dID, 20, 12);
+		$url = "https://api.notion.com/v1/databases/$dID/query";
+	
+		$response = wp_remote_post($url , array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $api,
+				'Content-Type' => 'application/json',
+				'Notion-Version' => '2021-08-16'
+			)
+		));
+		//MB added check for error in response
+		if( is_wp_error( $response ) ) {
+			error_log(print_r($response, true));
+			return false; // Stop processing here on error
+		}
+		$body = wp_remote_retrieve_body( $response );
+		
+		
+		$arrResult = json_decode($body, true);
 
 
 		$wpdb->update($table_name, array('status' => 'inactive'), array('status' => 'Active'));
@@ -184,16 +185,18 @@ class Notion_Content_Admin {
 		$page_content = "";
 		$pID = str_replace("-", "", $page_id);
 		//MB added call to wordpress function wp_remote_post()
+		$data = ['page_size'=>100, 'name'=>'test']; //array
 		$url = "https://api.notion.com/v1/blocks/$pID/children";
-		$response = wp_remote_get($url , array(
+		// $url .= (strpos($url , '?') !== false ? '&' : '?') . http_build_query($data);
+		
+		$data = array('page_size' => 100);
+		$query_url = $url.'?'.http_build_query($data);
+		$response = wp_remote_get($query_url , array(
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $api,
 				'Content-Type' => 'application/json',
 				'Notion-Version' => '2021-08-16'
-			),
-			'body' => '{
-				"page_size": 100
-			}'
+			)
 		));
 		//MB added check for error in response
 		if( is_wp_error( $response ) ) {
@@ -206,6 +209,8 @@ class Notion_Content_Admin {
 		$arrAnnotations = array( "bold" => "strong", "italic" => "i", "strikethrough" => "del", "underline" => "u", "code" => "code");
 		$bulleted_list_item = false;
 		$numbered_list_item = false;
+		
+
 		foreach($arrResult["results"] AS $block_row) {
 			$block_content = "";
 			$block_type = $block_row["type"];
