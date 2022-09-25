@@ -135,6 +135,7 @@ class Notion_Content_Admin {
 				'Notion-Version' => '2021-08-16'
 			)
 		));
+		
 		//MB added check for error in response
 		if( is_wp_error( $response ) ) {
 			error_log(print_r($response, true));
@@ -185,7 +186,7 @@ class Notion_Content_Admin {
 		$page_content = "";
 		$pID = str_replace("-", "", $page_id);
 		//MB added call to wordpress function wp_remote_post()
-		$data = ['page_size'=>100, 'name'=>'test']; //array
+		$data = ['page_size'=>100]; //array
 		$url = "https://api.notion.com/v1/blocks/$pID/children";
 		// $url .= (strpos($url , '?') !== false ? '&' : '?') . http_build_query($data);
 		
@@ -195,30 +196,100 @@ class Notion_Content_Admin {
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $api,
 				'Content-Type' => 'application/json',
-				'Notion-Version' => '2021-08-16'
+				'Notion-Version' => '2022-06-28'
 			)
 		));
+		//TODO remove testing - get page rather than blocks??
+		// $data = ['page_size'=>100]; //array
+		// $url = "https://api.notion.com/v1/pages/$pID";
+		
+		// // $url .= (strpos($url , '?') !== false ? '&' : '?') . http_build_query($data);
+		
+		// $data = array('page_size' => 100);
+		// // $query_url = $url.'?'.http_build_query($data);
+		// $nresponse = wp_remote_get($url , array(
+		// 	'headers' => array(
+		// 		'Authorization' => 'Bearer ' . $api,
+		// 		'Content-Type' => 'application/json',
+		// 		'Notion-Version' => '2022-06-28'
+		// 	)
+		// ));
+		// $bodyn = wp_remote_retrieve_body( $nresponse );
+		// error_log(print_r($bodyn, true));
+
 		//MB added check for error in response
 		if( is_wp_error( $response ) ) {
 			error_log(print_r($response, true));
 			return false; // Stop processing here on error
 		}
 		$body = wp_remote_retrieve_body( $response );
-
+		
 		$arrResult = json_decode(	$body , true);
 		$arrAnnotations = array( "bold" => "strong", "italic" => "i", "strikethrough" => "del", "underline" => "u", "code" => "code");
 		$bulleted_list_item = false;
 		$numbered_list_item = false;
 		
-
+	
 		foreach($arrResult["results"] AS $block_row) {
+			
 			$block_content = "";
 			$block_type = $block_row["type"];
 			$block_id = $block_row["id"];
 			// ["text"] is not present on some blocks - test for ["text"]
 			//TODO check for other blocks that aren't text based?
-			if(isset($block_row[$block_type]["text"])) {
-				foreach($block_row[$block_type]["text"] AS $block_text) {
+			error_log(print_r($block_id, true));
+			//TODO Columns?
+			// error_log(print_r($block_type, true));
+			if($block_type==="column_list"){
+				
+				// $block_id = $block_row["id"];
+				//get children of current block id
+				$url = "https://api.notion.com/v1/blocks/$block_id/children";
+				$data = array('page_size' => 100);
+				$query_url = $url.'?'.http_build_query($data);
+
+				$response = wp_remote_get($query_url , array(
+					'headers' => array(
+						'Authorization' => 'Bearer ' . $api,
+					
+						'Content-Type' => 'application/json',
+						'Notion-Version' => '2022-06-28'
+					)
+				));
+				$body = wp_remote_retrieve_body( $response );
+				$arrResult = json_decode(	$body , true);
+		
+				foreach($arrResult["results"] AS $block_row_child) {
+					$block_id_child = $block_row_child["id"];
+					$url = "https://api.notion.com/v1/blocks/$block_id_child/children";
+				
+					$response = wp_remote_get($url , array(
+						'headers' => array(
+							'Authorization' => 'Bearer ' . $api,
+						
+							'Content-Type' => 'application/json',
+							'Notion-Version' => '2022-06-28'
+						)
+					));
+					$body = wp_remote_retrieve_body( $response );
+					error_log(print_r($body , true));
+				}
+			}
+			
+			if(isset($block_row[$block_type]["external"])){
+				
+				$open_tag = "";
+					$close_tag = "";
+				if(isset($block_row[$block_type]["external"]["caption"][0])){
+					$block_content = "<img src='".$block_row[$block_type]["external"]["url"]."' alt='".$block_row[$block_type]["external"]["caption"][0]["plain_text"]."'>";
+				} else {
+					$block_content = "<img src='".$block_row[$block_type]["external"]["url"]."'>";
+				}
+			}
+			if(isset($block_row[$block_type]["rich_text"])) {
+				// error_log(print_r($block_row[$block_type]["rich_text"][0]['text'], true));
+				foreach($block_row[$block_type]["rich_text"] AS $block_text) {
+					
 					reset($arrAnnotations);
 					$open_tag = "";
 					$close_tag = "";
@@ -229,7 +300,7 @@ class Notion_Content_Admin {
 						}
 					}
 					if(isset($block_text["text"]["link"])) {
-						$block_content_variable = "<a href='" . $block_text["text"]["link"]["url"] . "'>" . $block_text["text"]["content"] . "</a>";
+						$block_content_variable = "<a href='" . $block_text["text"]["link"]["url"] . "' target='_blank'>" . $block_text["text"]["content"] . "</a>";
 					} else{
 						$block_content_variable = $block_text["text"]["content"];
 					}
