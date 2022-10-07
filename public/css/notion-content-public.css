@@ -2,15 +2,14 @@
  * All of the CSS for your public-facing functionality should be
  * included in this file.
  */
-
+ .notion-content-row{
+   display:flex;
+ }
  .notion-content-columns {
-    max-width: 50%;
-    display: block;
-    float: left;
-    width: 50%;
+   margin: 5px;
  }
  .notion-content-columns ::after{
-    clear: both;
+
  }
  .notion-content-columns img {
     max-width: 100%;

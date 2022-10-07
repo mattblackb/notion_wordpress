@@ -83,21 +83,7 @@ class Notion_Content_Admin {
 	 * @since    1.0.0
 	 */
 	public function enqueue_scripts() {
-
-		/**
-		 * This function is provided for demonstration purposes only.
-		 *
-		 * An instance of this class should be passed to the run() function
-		 * defined in Notion_Content_Loader as all of the hooks are defined
-		 * in that particular class.
-		 *
-		 * The Notion_Content_Loader will then create the relationship
-		 * between the defined hooks and the functions defined in this
-		 * class.
-		 */
-
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/notion-content-admin.js', array( 'jquery' ), $this->version, false );
-
 	}
 
 
@@ -142,15 +128,13 @@ class Notion_Content_Admin {
 			return false; // Stop processing here on error
 		}
 		$body = wp_remote_retrieve_body( $response );
-		
-		
 		$arrResult = json_decode($body, true);
-
-
 		$wpdb->update($table_name, array('status' => 'inactive'), array('status' => 'Active'));
 		foreach($arrResult["results"] AS $row) {
 			$page_id = $row["id"];
 			$page_name = $row["properties"]["Name"]["title"][0]["plain_text"];
+
+	
 			if($wpdb->get_row("SELECT * FROM $table_name WHERE page_id='$page_id'")) {
 				$wpdb->update($table_name, array('page_name' => $page_name, 'status' => 'Active'), array('page_id' => $page_id));
 			}
@@ -159,6 +143,9 @@ class Notion_Content_Admin {
 				$time = date("Y-m-d H:i:s");
 				$wpdb->insert($table_name, array('time'=> $time, 'page_id' => $page_id, 'page_name' => $page_name));
 			}
+
+					//getbody content by
+			$this->refresh_notion_content($page_id);
 		}
 	}
 
@@ -207,7 +194,7 @@ class Notion_Content_Admin {
 			return false; // Stop processing here on error
 		}
 		$body = wp_remote_retrieve_body( $response );
-		
+	
 		$arrResult = json_decode(	$body , true);
 		$arrAnnotations = array( "bold" => "strong", "italic" => "i", "strikethrough" => "del", "underline" => "u", "code" => "code");
 		$bulleted_list_item = false;
@@ -218,9 +205,6 @@ class Notion_Content_Admin {
 			$return_html_temp  = "";
 			$block_type = $block_row["type"];
 			$block_id = $block_row["id"];
-			// ["text"] is not present on some blocks - test for ["text"]
-			//TODO check for other blocks that aren't text based?
-			//TODO Columns?
 			// error_log(print_r($block_type, true));
 			if($block_type==="column_list"){
 				//get children of current block id
@@ -238,7 +222,7 @@ class Notion_Content_Admin {
 				));
 				$body = wp_remote_retrieve_body( $response );
 				$arrResult = json_decode(	$body , true);
-
+				$return_html .="<div class='notion-content-row'>";
 				foreach($arrResult["results"] AS $block_row_child) {
 					$block_id_child = $block_row_child["id"];
 					$url = "https://api.notion.com/v1/blocks/$block_id_child/children";
@@ -255,28 +239,17 @@ class Notion_Content_Admin {
 					
 					$arrResult_column_blocks = json_decode(	$body_child  , true);
 					foreach($arrResult_column_blocks AS $block_row_child_body) {
-						
 						if(is_array($block_row_child_body) && count($block_row_child_body) > 0){
-							error_log(print_r($block_row_child_body, true));
 							$return_html .="<div class='notion-content-columns'>";
 							foreach($block_row_child_body AS $block_row_child_body_row) {
 								$return_html_temp =return_html_notion_content($block_row_child_body_row, $arrAnnotations, $bulleted_list_item, $numbered_list_item);
 								$return_html .= $return_html_temp;
 							// error_log('block row body' . print_r($return_html_temp, true));
 							}
-							$return_html .="</div>";
+							
 						}
-						
-						// foreach($block_row_child_body as $block_row_child_body_row){
-						// 	error_log(print_r($block_row_child_body_row, true));
-						
-
-						// }
-						//$return_html_temp =return_html_notion_content($block_row_child_body, $arrAnnotations, $bulleted_list_item, $numbered_list_item);
-						// $return_html .= $return_html_temp;
-						//error_log(print_r($block_row_child_body[0], true));
 					}
-
+					$return_html .="</div>";
 				}
 				$return_html = $return_html . "</div>";
 			} else {
@@ -307,9 +280,8 @@ class Notion_Content_Admin {
 		if(isset($_GET["action"])){
 		switch($_GET["action"]) {
 			case "view_content":
-
-
 				$output = $this->display_content($_GET["page_id"]);
+				error_log('Output: ' . print_r(	$output, true));	
 				include_once("partials/notion-content-output.php");
 				break;
 

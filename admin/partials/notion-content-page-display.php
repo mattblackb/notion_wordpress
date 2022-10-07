@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Provide a admin area view for the plugin
  *
@@ -11,46 +10,42 @@
  * @package    Notion_Content
  * @subpackage Notion_Content/admin/partials
  */
-
-
-
 ?>
 
 <div class="wrap">
 
 
 <?php if($my_content) : ?>
+	<a href="?page=notion-content&action=refresh_list">Refresh list</a>
+	<br/>
+	<p><small class="description">This will refresh the list of content from Notion - it may take some time</small></p>
 
-
-<small><a href="?page=notion-content&action=refresh_list">Refresh List</a></small>
-
-
-<table class="data">
-<tr>
-	<th>Page Name</th>
-	<th>Shortcode</th>
-	<th>Action</th>
-</tr>
-<?php foreach($my_content AS $content_row) : ?>
-<tr>
-	<td><?php echo $content_row->page_name; ?></td>
-	<td>
-	[notion_content id=<?php echo $content_row->id; ?>]
-	</td>
-	<td>
-	<small>
-		<a href="admin.php?page=notion-content&action=view_content&page_id=<?php echo $content_row->page_id; ?>">View Content</a> |
-		<a href="admin.php?page=notion-content&action=refresh_content&page_id=<?php echo $content_row->page_id; ?>">Refresh Content</a>
-	</small>
-	</td>
-</tr>
+	<table class="data">
+	<tr>
+		<th>Page Name</th>
+		<th>Shortcode</th>
+		<th>Action</th>
+	</tr>
+	<?php foreach($my_content AS $content_row) : ?>
+	<tr>
+		<td><?php echo $content_row->page_name; ?></td>
+		<td>
+		[notion_content id=<?php echo $content_row->id; ?>]
+		</td>
+		<td>
+		<small>
+			<a href="admin.php?page=notion-content&action=view_content&page_id=<?php echo $content_row->page_id; ?>">View Content</a> |
+			<a href="admin.php?page=notion-content&action=refresh_content&page_id=<?php echo $content_row->page_id; ?>">Refresh Content</a>
+		</small>
+		</td>
+	</tr>
 <?php endforeach; ?>
 </table>
 
 <?php else : ?>
-
-	<a href="?page=notion-content&action=refresh_list">List Content</a>
-
+	<a href="?page=notion-content&action=refresh_list">List content</a>
+	<br/>
+	<p><small class="description">This will list of content from Notion - it may take some time</small></p>
 <?php endif ?>
 
 </div>
