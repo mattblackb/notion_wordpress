@@ -110,7 +110,6 @@ class Notion_Content_Public {
 		global $wpdb;
 		$table_name = $wpdb->prefix . "notion_content";
 		$a = shortcode_atts( array( 'id' => '0',), $atts );
-		error_log( 'information goes here' );
 		$id = $a["id"];
 		$my_content = $wpdb->get_row( "SELECT * FROM $table_name WHERE id = $id" );
 		$time= $my_content->time;
@@ -120,6 +119,9 @@ class Notion_Content_Public {
 			if(!$notion_refresh_interval) {
 				$notion_refresh_interval = "5";
 			}
+		} else {
+			settings_fields( 'notion_content_plugin' );
+			$notion_refresh_interval = get_option('notion_refresh_interval');
 		}
 		$cut_off = date("Y-m-d H:i:s", strtotime("-$notion_refresh_interval minutes"));
 		if($notion_refresh_interval != "None" && $time < $cut_off) {

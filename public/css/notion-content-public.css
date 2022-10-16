@@ -4,13 +4,16 @@
  */
  .notion-content-row{
    display:flex;
+   width:100%;
  }
+ .notion-content-row > * { flex: 1; }
  .notion-content-columns {
    margin: 5px;
+   flex-wrap: wrap;
+   display: flex;
+   align-content: flex-start;
  }
- .notion-content-columns ::after{
-
- }
+ .notion-content-columns > * { width: 100%; }
  .notion-content-columns img {
     max-width: 100%;
     height: auto;

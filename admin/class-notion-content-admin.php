@@ -205,7 +205,79 @@ class Notion_Content_Admin {
 			$return_html_temp  = "";
 			$block_type = $block_row["type"];
 			$block_id = $block_row["id"];
-			// error_log(print_r($block_type, true));
+
+			//Build Tables
+			if($block_type==="table"){
+				$has_header =  $block_row['table']['has_column_header'];
+				$has_row_header = $block_row['table']['has_row_header'];
+				$table_width = $block_row['table']['table_width'];
+
+				//Get the block data
+				$url = "https://api.notion.com/v1/blocks/$block_id/children";
+				$data = array('page_size' => 100);
+				$query_url = $url.'?'.http_build_query($data);
+				$response = wp_remote_get($query_url , array(
+					'headers' => array(
+						'Authorization' => 'Bearer ' . $api,
+					
+						'Content-Type' => 'application/json',
+						'Notion-Version' => '2022-06-28'
+					)
+				));
+				$body = wp_remote_retrieve_body( $response );
+				$arrResult = json_decode(	$body , true);
+				//loop around $arrResult["results"] AS $block_row to get the table data ad output as html
+				$return_html_temp .= "<table>";
+				$col_count = 0;
+				$row_count = 0;
+				foreach($arrResult["results"] AS $block_row) {
+					
+					$return_html_temp .= "<tr>";
+					if($row_count == 0){ 
+						$headerorno = "<th>";
+						$headerornoend = "</th>";
+					}
+					else{
+						$headerorno = "<td>";
+						$headerornoend = "</td>";
+					}
+					foreach($block_row['table_row']['cells'] AS $cell){
+							//  $return_html_temp .= $headerorno.$cell[0]['text']['content'].$headerornoend;
+							reset($arrAnnotations);
+							$open_tag = "";
+							$close_tag = "";
+							foreach($arrAnnotations AS $ntag => $html_tag) {
+								if(isset($cell[0]["annotations"])){
+									if($cell[0]["annotations"][$ntag]) {
+										$open_tag .= "<$html_tag>";
+										$close_tag = "</$html_tag>" . $close_tag;
+									}
+								}
+							}
+							if(	$has_row_header == 1 && $row_count == 0){
+								$headerorno = "<td class='notion_content_header_row'>";
+							}
+							//TODO Handle extra cells for multiple colours/annotaions
+							if(isset($cell[0]['plain_text'])){
+								$return_html_temp .= $headerorno."<span class='notion_content_".$cell[0]['annotations']['color']."'>".$open_tag.$cell[0]['plain_text'].'</span>'.$close_tag.$headerornoend;
+								error_log(print_r($cell[0]['annotations']['color'], true));
+							}
+							$row_count++;
+							
+					}
+					$return_html_temp .= "</tr>";
+					
+				}
+				$return_html_temp .= "</table>";
+
+				$return_html .= $return_html_temp;
+
+				// error_log(print_r($block_row, true));
+			}
+			//End Build Table data
+
+
+			//Get each detail for column blocks
 			if($block_type==="column_list"){
 				//get children of current block id
 				$url = "https://api.notion.com/v1/blocks/$block_id/children";

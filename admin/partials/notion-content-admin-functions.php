@@ -44,7 +44,7 @@
         $pre = "</ol>\n";
         $numbered_list_item = false;
     }
-
+   
     switch($block_type) {
         case "heading_1":
             $block_content = "$pre<h1>$block_content</h1>\n";
@@ -70,6 +70,10 @@
             break;
         case "callout":
             $block_content = "$pre<div class='callout'>$block_content</div>\n";
+            break;
+        case "table";
+        error_log(print_r($block_content, true));
+            
             break;
         case "bulleted_list_item":
             if(!$bulleted_list_item) {

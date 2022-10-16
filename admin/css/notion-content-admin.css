@@ -7,3 +7,16 @@
 
 table.data { border-collapse: collapse; }
 table.data td, table.data th { border: 1px solid #CCC; padding: 8px 10px; font-size: 16px; }
+.notion_content_blue { color: #00F; }
+.notion_content_grey { color: #999; }
+.notion_content_brown { color: brown; }
+.notion_content_red { color: red; }
+.notion_content_green { color: green; }
+.notion_content_orange { color: orange; }
+.notion_content_yellow { color: yellow; }
+.notion_content_purple { color: purple; }
+.notion_content_pink { color: pink; }
+.notion_content_black { color: black; }
+.notion_content_white { color: white; }
+
+
