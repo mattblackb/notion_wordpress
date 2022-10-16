@@ -46,7 +46,7 @@ class Notion_Content_Activator {
 
 
 		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-		dbDelta( $sql );
+		maybe_create_table($table_name, $sql);
 	}
 
 }

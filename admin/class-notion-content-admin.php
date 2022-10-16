@@ -258,10 +258,17 @@ class Notion_Content_Admin {
 								$headerorno = "<td class='notion_content_header_row'>";
 							}
 							//TODO Handle extra cells for multiple colours/annotaions
-							if(isset($cell[0]['plain_text'])){
-								$return_html_temp .= $headerorno."<span class='notion_content_".$cell[0]['annotations']['color']."'>".$open_tag.$cell[0]['plain_text'].'</span>'.$close_tag.$headerornoend;
-								error_log(print_r($cell[0]['annotations']['color'], true));
+							$return_html_temp .= $headerorno;
+							foreach($cell AS $cell_row){
+								if(isset($cell_row['plain_text'])){
+									$return_html_temp .= "<span class='notion_content_".$cell_row['annotations']['color']."'>".$cell_row['plain_text'].'</span>';
+									
+								}
 							}
+							$return_html_temp .= $headerornoend;
+
+
+							
 							$row_count++;
 							
 					}
@@ -275,8 +282,6 @@ class Notion_Content_Admin {
 				// error_log(print_r($block_row, true));
 			}
 			//End Build Table data
-
-
 			//Get each detail for column blocks
 			if($block_type==="column_list"){
 				//get children of current block id

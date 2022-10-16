@@ -15,15 +15,21 @@
         }
     }
     if(isset($block_row[$block_type]["rich_text"])) {
-        // error_log(print_r($block_row[$block_type]["rich_text"][0]['text'], true));
         foreach($block_row[$block_type]["rich_text"] AS $block_text) {
-            
             reset($arrAnnotations);
             $open_tag = "";
             $close_tag = "";
+            $color = "";
             foreach($arrAnnotations AS $ntag => $html_tag) {
                 if($block_text["annotations"][$ntag]) {
-                    $open_tag .= "<$html_tag>";
+                    if($block_row[$block_type]["rich_text"][0]['annotations']['color']){
+                        error_log(print_r($block_row[$block_type]["rich_text"][0]['annotations']['color'], true));
+                        $color = $block_row[$block_type]["rich_text"][0]['annotations']['color'];
+                        $open_tag .= "<$html_tag class='".$block_row[$block_type]["rich_text"][0]['annotations']['color']."'>";
+                    } else {
+                        $open_tag .= "<$html_tag>";
+                    }
+                  
                     $close_tag = "</$html_tag>" . $close_tag;
                 }
             }
@@ -50,7 +56,7 @@
             $block_content = "$pre<h1>$block_content</h1>\n";
             break;
         case "heading_2":
-            $block_content = "$pre<h2>$block_content</h2>\n";
+            $block_content = "$pre<h2 class='$color'>$block_content</h2>\n";
             break;
         case "heading_3":
             $block_content = "$pre<h3>$block_content</h3>\n";
@@ -72,8 +78,7 @@
             $block_content = "$pre<div class='callout'>$block_content</div>\n";
             break;
         case "table";
-        error_log(print_r($block_content, true));
-            
+   
             break;
         case "bulleted_list_item":
             if(!$bulleted_list_item) {
